@@ -1,12 +1,13 @@
 import numpy as np
 import random
+import time
 from copy import deepcopy
 
 
 N = 5
 MAGIC_NUMBER = N * (N**3 + 1) // 2
-POPULATION_SIZE = 50
-MAX_ITERATIONS = 500
+POPULATION_SIZE = 25
+MAX_ITERATIONS = 10
 MUTATION_RATE = 0.1
 
 
@@ -60,6 +61,7 @@ def genetic_algorithm():
     best_solution = None
     best_fitness = float('inf')
     fitness_over_time = []
+    start_time = time.time()
 
     for iteration in range(MAX_ITERATIONS):
         fitness_scores = [calculate_objective(ind) for ind in population]
@@ -84,9 +86,10 @@ def genetic_algorithm():
 
         if best_fitness == 0:
             break
-
+    duration = time.time() - start_time
     print("Hasil akhir:")
     print("Objective Function Akhir:", best_fitness)
+    print("Durasi:", duration)
     print("State akhir dari kubus:", best_solution)
     return best_solution, fitness_over_time
 
