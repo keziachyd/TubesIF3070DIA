@@ -1,116 +1,128 @@
-import random
 import numpy as np
+import random
 import math
-import time
 import matplotlib.pyplot as plt
+import time
 
-# Fungsi untuk menginisialisasi kubus 5x5x5 dengan angka acak dari 1 hingga 125
-def initialize_cube(size=5):
-    numbers = list(range(1, size**3 + 1))
-    random.shuffle(numbers)
-    cube = np.array(numbers).reshape(size, size, size)
-    return cube
 
-# Fungsi untuk menghitung nilai objective function
-def calculate_objective(cube):
-    size = cube.shape[0]
-    magic_number = (size * (size**3 + 1)) / 2
-    total_error = 0
+N = 5  
+magicSum = N * (N**3 + 1) / 2  
 
-    for i in range(size):
-        total_error += abs(magic_number - sum(cube[i, :, :].flatten()))  # Row
-        total_error += abs(magic_number - sum(cube[:, i, :].flatten()))  # Column
-        total_error += abs(magic_number - sum(cube[:, :, i].flatten()))  # Depth
 
-    total_error += abs(magic_number - sum(cube[i, i, i] for i in range(size)))  # Diagonal utama 1
-    total_error += abs(magic_number - sum(cube[i, i, size - i - 1] for i in range(size)))  # Diagonal utama 2
+def count_objective(cube):
+    objective = 0
+    for layer in cube:
+        for row in layer:
+            objective += abs(sum(row) - magicSum)
+    for layer in cube:
+        for column in range(N):
+            column_sum = sum(layer[row][column] for row in range(N))
+            objective += abs(column_sum - magicSum)
+    for row in range(N):
+        for column in range(N):
+            pillar_sum = sum(cube[layer][row][column] for layer in range(N))
+            objective += abs(pillar_sum - magicSum)
+    return objective
 
-    return total_error
 
-# Implementasi Simulated Annealing
-def simulated_annealing(cube, max_iterations=1000, initial_temp=100, cooling_rate=0.99):
-    current_cube = cube.copy()
-    current_objective = calculate_objective(current_cube)
-    best_objective = current_objective
-    iteration_objectives = [current_objective]  # Untuk plot
-    stuck_count = 0  # Menghitung frekuensi 'stuck' di local optima
-    acceptance_probs = []  # Untuk plot e^(deltaE/T)
+def simulated_annealing(initial_cube, suhu_awal, cooldown, max_iteration, interval=1000):
+    cube = np.copy(initial_cube)
+    best_cube = np.copy(cube)
+    best_objective = count_objective(cube)
     
-    start_time = time.time()
+    suhu = suhu_awal
+    objectiveNow = count_objective(cube)
+    
+    
+    plot_objective = []
+    decay_values = []  
+    stuck_count = 0
+    startTime = time.time()
 
-    for iteration in range(max_iterations):
-        # Menghitung suhu saat ini
-        temperature = initial_temp * (cooling_rate ** iteration)
+    for i in range(max_iteration):
+        if suhu <= 0.1:  
+            suhu = 0.1
+   
+        plot_objective.append(objectiveNow)
         
-        # Cek jika suhu sudah sangat rendah, hentikan pencarian
-        if temperature <= 0.1:
-            break
+        new_cube = np.copy(cube)
+        x1, y1, z1 = random.randint(0, N-1), random.randint(0, N-1), random.randint(0, N-1)
+        x2, y2, z2 = random.randint(0, N-1), random.randint(0, N-1), random.randint(0, N-1)
+        new_cube[x1][y1][z1], new_cube[x2][y2][z2] = new_cube[x2][y2][z2], new_cube[x1][y1][z1]
         
-        # Menukar dua posisi acak dalam kubus
-        pos1 = tuple(np.random.randint(0, current_cube.shape[0], size=3))
-        pos2 = tuple(np.random.randint(0, current_cube.shape[0], size=3))
-        current_cube[pos1], current_cube[pos2] = current_cube[pos2], current_cube[pos1]
-        
-        # Hitung nilai objective baru
-        new_objective = calculate_objective(current_cube)
-        
-        # Hitung perubahan energi dan probabilitas penerimaan
-        delta_e = new_objective - current_objective
-        if delta_e < 0:
-            accept = True  # Terima solusi lebih baik langsung
+        new_objective = count_objective(new_cube)
+        delta_e = objectiveNow - new_objective
+      
+        if suhu > 0: 
+            delta = min(700, max(-700, delta_e / suhu)) 
+            decay_value = math.exp(delta)
         else:
-            acceptance_probability = math.exp(-delta_e / temperature)
-            accept = acceptance_probability > random.random()
-            acceptance_probs.append(acceptance_probability)  # Untuk plot
-            
-        if accept:
-            current_objective = new_objective
-            if new_objective < best_objective:
-                best_objective = new_objective
-        else:
-            # Jika tidak diterima, kembalikan ke kondisi awal dan hitung sebagai stuck
-            current_cube[pos1], current_cube[pos2] = current_cube[pos2], current_cube[pos1]
-            stuck_count += 1
-
-        iteration_objectives.append(current_objective)
-
-        # Print setiap 100 iterasi untuk melihat progres
-        if iteration % 100 == 0:
-            print(f"Iterasi {iteration}, Nilai Objective: {current_objective}, Temperature: {temperature}")
+            decay_value = 0  
         
-        # Jika mencapai optimal (objective = 0), berhenti
-        if current_objective == 0:
-            break
+        decay_value = min(1e300, decay_value)  
+        decay_values.append(decay_value)
+        
+        
+        if delta_e > 0 or decay_value > random.random():
+            cube = new_cube
+            objectiveNow = new_objective
+        else:
+            stuck_count += 1 
+        
+     
+        if objectiveNow < best_objective:
+            best_cube = np.copy(cube)
+            best_objective = objectiveNow
+        
+    
+        suhu *= cooldown
+        
+    
+        if (i + 1) % interval == 0:
+            print(f"Iterasi {i+1}, Suhu {suhu:.4f}, Objective Saat Ini {objectiveNow}, Objective Terbaik {best_objective}")
+    
+    endTime = time.time()
+    durasi = endTime - startTime
+    
+    print("\nState Akhir Kubus:")
+    print(best_cube)
+    print(f"Jumlah Stuck: {stuck_count}")
+    print(f"Durasi Total: {durasi:.2f} detik")
+    
+    plt.figure()
+    plt.plot(plot_objective, label="Nilai Objective")
+    plt.xlabel("Iterasi")
+    plt.ylabel("Nilai Fungsi Objective")
+    plt.title("Perkembangan Fungsi Objective selama Iterasi")
+    plt.legend()
+    plt.show()
 
-    end_time = time.time()
-    duration = end_time - start_time
+    plt.figure()
+    plt.plot(decay_values, label="e^(Delta E / T)")
+    
+    decay_values = [val if val < 1e300 else 1e300 for val in decay_values]  
+    plt.yscale('log') 
+    plt.xlabel("Iterasi")
+    plt.ylabel("Nilai $e^{\\Delta E / T}$ (skala log)")
+    plt.title("$e^{\\Delta E / T}$ Selama Iterasi (Skala Logaritmik)")
+    plt.legend()
+    plt.show()
+    
+    return best_cube, best_objective, durasi, stuck_count
 
-    return current_cube, current_objective, iteration_objectives, duration, acceptance_probs, stuck_count
+initial_cube = np.arange(1, N**3 + 1)  
+np.random.shuffle(initial_cube)  
+initial_cube = initial_cube.reshape(N, N, N)  
 
-# Menjalankan eksperimen
-cube = initialize_cube()
-print("State Awal Kubus:")
-print(cube)
 
-# Menjalankan simulated annealing
-final_cube, final_objective, iteration_objectives, duration, acceptance_probs, stuck_count = simulated_annealing(cube)
+initial_temp = 100.0
+cooldown = 0.99  
+max_iteration = 10000
+interval = 1000  
 
-print("\nState Akhir Kubus:")
-print(final_cube)
-print("\nNilai Objective Akhir:", final_objective)
-print("Durasi Pencarian:", duration, "detik")
-print("Frekuensi 'stuck' di local optima:", stuck_count)
 
-# Plot nilai objective function terhadap iterasi
-plt.plot(iteration_objectives)
-plt.xlabel("Iterasi")
-plt.ylabel("Nilai Objective Function")
-plt.title("Perkembangan Nilai Objective Function pada Simulated Annealing")
-plt.show()
+best_cube, best_objective, durasi, stuck_count = simulated_annealing(initial_cube, initial_temp, cooldown, max_iteration, interval)
 
-# Plot nilai e^(deltaE/T) terhadap iterasi
-plt.plot(acceptance_probs)
-plt.xlabel("Iterasi")
-plt.ylabel("Probabilitas Penerimaan (e^(deltaE/T))")
-plt.title("Plot e^(deltaE/T) terhadap Iterasi pada Simulated Annealing")
-plt.show()
+print("Nilai Objective Terbaik yang Ditemukan:", best_objective)
+print("Konfigurasi Kubus Terbaik:")
+print(best_cube)
