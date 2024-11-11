@@ -16,6 +16,7 @@ Anggota 1
 Nama: Regina Deva Carissa
 
 NIM: 18222040
+
 Pembagian Tugas:
 1. Membuat source code simulated annealing dan source code Steepest Ascent Hill Climbing
 2. Menjawab pertanyaan analisis
@@ -23,6 +24,7 @@ Pembagian Tugas:
 4. Merapikan dokumen
 
 Anggota 2
+
 Nama: Kezia Caren Cahyadi
 
 NIM: 18222041
@@ -34,6 +36,7 @@ Pembagian Tugas:
 4. Merapikan dokumen
 
 Anggota 3
+
 Nama: Ananda Farhan Raihandra
 
 NIM: 18222084
