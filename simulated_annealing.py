@@ -4,10 +4,8 @@ import math
 import matplotlib.pyplot as plt
 import time
 
-
 N = 5  
-magicSum = N * (N**3 + 1) / 2  
-
+magicSum = N * (N**3 + 1) / 2   
 
 def count_objective(cube):
     objective = 0
@@ -24,7 +22,6 @@ def count_objective(cube):
             objective += abs(pillar_sum - magicSum)
     return objective
 
-
 def simulated_annealing(initial_cube, suhu_awal, cooldown, max_iteration, interval=1000):
     cube = np.copy(initial_cube)
     best_cube = np.copy(cube)
@@ -32,7 +29,6 @@ def simulated_annealing(initial_cube, suhu_awal, cooldown, max_iteration, interv
     
     suhu = suhu_awal
     objectiveNow = count_objective(cube)
-    
     
     plot_objective = []
     decay_values = []  
@@ -48,20 +44,25 @@ def simulated_annealing(initial_cube, suhu_awal, cooldown, max_iteration, interv
         new_cube = np.copy(cube)
         x1, y1, z1 = random.randint(0, N-1), random.randint(0, N-1), random.randint(0, N-1)
         x2, y2, z2 = random.randint(0, N-1), random.randint(0, N-1), random.randint(0, N-1)
+        
+        while (x1, y1, z1) == (x2, y2, z2):  # Hindari pertukaran elemen yang sama
+            x2, y2, z2 = random.randint(0, N-1), random.randint(0, N-1), random.randint(0, N-1)
+        
         new_cube[x1][y1][z1], new_cube[x2][y2][z2] = new_cube[x2][y2][z2], new_cube[x1][y1][z1]
         
         new_objective = count_objective(new_cube)
         delta_e = objectiveNow - new_objective
       
         if suhu > 0: 
-            delta = min(700, max(-700, delta_e / suhu)) 
-            decay_value = math.exp(delta)
+            try:
+                decay_value = math.exp(delta_e / suhu)
+            except OverflowError:
+                decay_value = float('inf') if delta_e > 0 else 0.0
         else:
             decay_value = 0  
         
         decay_value = min(1e300, decay_value)  
         decay_values.append(decay_value)
-        
         
         if delta_e > 0 or decay_value > random.random():
             cube = new_cube
@@ -69,15 +70,12 @@ def simulated_annealing(initial_cube, suhu_awal, cooldown, max_iteration, interv
         else:
             stuck_count += 1 
         
-     
         if objectiveNow < best_objective:
             best_cube = np.copy(cube)
             best_objective = objectiveNow
         
-    
         suhu *= cooldown
         
-    
         if (i + 1) % interval == 0:
             print(f"Iterasi {i+1}, Suhu {suhu:.4f}, Objective Saat Ini {objectiveNow}, Objective Terbaik {best_objective}")
     
@@ -98,9 +96,8 @@ def simulated_annealing(initial_cube, suhu_awal, cooldown, max_iteration, interv
     plt.show()
 
     plt.figure()
-    plt.plot(decay_values, label="e^(Delta E / T)")
-    
     decay_values = [val if val < 1e300 else 1e300 for val in decay_values]  
+    plt.plot(decay_values, label="e^(Delta E / T)")
     plt.yscale('log') 
     plt.xlabel("Iterasi")
     plt.ylabel("Nilai $e^{\\Delta E / T}$ (skala log)")
@@ -114,12 +111,10 @@ initial_cube = np.arange(1, N**3 + 1)
 np.random.shuffle(initial_cube)  
 initial_cube = initial_cube.reshape(N, N, N)  
 
-
 initial_temp = 100.0
 cooldown = 0.99  
 max_iteration = 10000
 interval = 1000  
-
 
 best_cube, best_objective, durasi, stuck_count = simulated_annealing(initial_cube, initial_temp, cooldown, max_iteration, interval)
 
