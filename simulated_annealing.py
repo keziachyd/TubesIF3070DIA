@@ -64,6 +64,8 @@ def simulated_annealing(initial_cube, suhu_awal, cooldown, max_iteration, interv
         if delta_e > 0 or decay_value > random.random():
             cube = new_cube
             objectiveNow = new_objective
+        else:
+            stuck_count += 1  # Increment stuck_count if new configuration is not accepted
         
         if objectiveNow < best_objective:
             best_cube = np.copy(cube)
