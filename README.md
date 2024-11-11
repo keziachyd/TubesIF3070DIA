@@ -12,7 +12,9 @@ Untuk melakukan setup dan membuka file diatas, maka yang harus dilakukan adalah:
 Pembagian Tugas Kelompok:
 
 Anggota 1
+
 Nama: Regina Deva Carissa
+
 NIM: 18222040
 Pembagian Tugas:
 1. Membuat source code simulated annealing dan source code Steepest Ascent Hill Climbing
