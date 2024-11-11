@@ -35,10 +35,15 @@ def simulated_annealing(initial_cube, suhu_awal, cooldown, max_iteration, interv
     stuck_count = 0
     startTime = time.time()
 
+    # Menampilkan state awal kubus
+    print("State Awal Kubus:")
+    print(initial_cube)
+    print("\n")  # Memberi spasi antara state awal dan proses simulasi
+
     for i in range(max_iteration):
         if suhu <= 0.1:  
             suhu = 0.1
-   
+       
         plot_objective.append(objectiveNow)
         
         new_cube = np.copy(cube)
@@ -52,23 +57,13 @@ def simulated_annealing(initial_cube, suhu_awal, cooldown, max_iteration, interv
         
         new_objective = count_objective(new_cube)
         delta_e = objectiveNow - new_objective
-      
-        if suhu > 0: 
-            try:
-                decay_value = math.exp(delta_e / suhu)
-            except OverflowError:
-                decay_value = float('inf') if delta_e > 0 else 0.0
-        else:
-            decay_value = 0  
-        
-        decay_value = min(1e300, decay_value)  
-        decay_values.append(decay_value)
+       
+        decay_value = math.exp(delta_e / suhu) if suhu > 0 else 0 
+        decay_values.append(decay_value) 
         
         if delta_e > 0 or decay_value > random.random():
             cube = new_cube
             objectiveNow = new_objective
-        else:
-            stuck_count += 1 
         
         if objectiveNow < best_objective:
             best_cube = np.copy(cube)
@@ -94,19 +89,19 @@ def simulated_annealing(initial_cube, suhu_awal, cooldown, max_iteration, interv
     plt.title("Perkembangan Fungsi Objective selama Iterasi")
     plt.legend()
     plt.show()
-
+    
     plt.figure()
     decay_values = [val if val < 1e300 else 1e300 for val in decay_values]  
     plt.plot(decay_values, label="e^(Delta E / T)")
-    plt.yscale('log') 
     plt.xlabel("Iterasi")
-    plt.ylabel("Nilai $e^{\\Delta E / T}$ (skala log)")
-    plt.title("$e^{\\Delta E / T}$ Selama Iterasi (Skala Logaritmik)")
+    plt.ylabel("Nilai $e^{\\Delta E / T}$")
+    plt.title("$e^{\\Delta E / T}$ Selama Iterasi")
     plt.legend()
     plt.show()
     
     return best_cube, best_objective, durasi, stuck_count
 
+# Menghasilkan kubus acak awal
 initial_cube = np.arange(1, N**3 + 1)  
 np.random.shuffle(initial_cube)  
 initial_cube = initial_cube.reshape(N, N, N)  
