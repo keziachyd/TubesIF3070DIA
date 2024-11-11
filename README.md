@@ -10,7 +10,6 @@ Untuk melakukan setup dan membuka file diatas, maka yang harus dilakukan adalah:
 4. Program akan berjalan pada command prompt. 
 
 Pembagian Tugas Kelompok:
-1. Bagian Tugas
 
 Anggota 1
 Nama: Regina Deva Carissa
